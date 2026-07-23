@@ -28,7 +28,7 @@ The bundled preflight helper creates provenance receipts, checks device and inod
 
 ## Install the Agent Skill
 
-After this repository is published:
+Install it with:
 
 ```text
 $skill-installer install https://github.com/vinzcio/claygo/tree/main/skills/claygo
