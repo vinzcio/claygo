@@ -1,0 +1,21 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run package and safety evaluations
+        env:
+          CLAYGO_TEST_ROOT: ${{ runner.temp }}/claygo-tests-${{ github.run_id }}-${{ github.run_attempt }}
+        run: python3 -m unittest discover -s evals -p 'test_*.py' -v

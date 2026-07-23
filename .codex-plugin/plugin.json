@@ -1,0 +1,36 @@
+{
+  "name": "claygo",
+  "version": "0.1.0",
+  "description": "Ownership-aware cleanup for temporary coding-agent artifacts.",
+  "author": {
+    "name": "Vincent",
+    "url": "https://github.com/vinzcio"
+  },
+  "homepage": "https://github.com/vinzcio/claygo",
+  "repository": "https://github.com/vinzcio/claygo",
+  "license": "MIT",
+  "keywords": [
+    "cleanup",
+    "agent-skill",
+    "temporary-files",
+    "developer-tools",
+    "safety"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "CLAYGO",
+    "shortDescription": "Safe cleanup for coding-agent artifacts",
+    "longDescription": "Give temporary artifacts an owner and lifecycle, preserve compact proof, and clean only exact disposable roots behind a deterministic safety gate.",
+    "developerName": "Vincent",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use CLAYGO for the temporary artifacts in this task.",
+      "Audit my task-owned scratch roots with CLAYGO.",
+      "Close out this task's disposable artifacts safely."
+    ]
+  }
+}

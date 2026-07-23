@@ -1,0 +1,4 @@
+interface:
+  display_name: "CLAYGO"
+  short_description: "Own and clean temporary artifacts safely"
+  default_prompt: "Use $claygo to manage this task's temporary artifacts with explicit ownership, lifecycle states, and exact-path cleanup proof."
