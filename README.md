@@ -18,7 +18,7 @@ CLAYGO gives every temporary artifact:
 - compact proof
 - an exact-path cleanup gate
 
-In one real-world run, this workflow removed 1,414,548 KiB (about 1.35 GiB) of expired build, screenshot, and cache artifacts while preserving source, Git and jj metadata, installed artifacts, and active work.
+In one real-world cleanup, this workflow reduced task-generated temporary storage by 27,804,260 KiB (26.516 GiB) while preserving active builds, source snapshots, proof evidence, repository files, captures, the installed app, and live agent sessions.
 
 ## What makes it different
 
