@@ -8,7 +8,7 @@ CLAYGO stands for **Clean As You Go**: the work ethic of cleaning up as part of 
 
 For coding agents, that means temporary artifacts are accounted for when they are created, kept only while they are useful, and removed at a safe waypoint with proof. The goal is not a spotless machine at any cost. It is disciplined work that does not leave a mess—or destroy live work while trying to clean one.
 
-Coding agents create build trees, screenshots, module caches, review snapshots, and scratch files quickly. Deleting them safely requires more than guessing which folder looks temporary.
+Coding agents create build trees, screenshots, module caches, review snapshots, scratch files, and browser tabs quickly. Finalizing them safely requires more than guessing which resource looks temporary.
 
 CLAYGO gives every temporary artifact:
 
@@ -18,11 +18,15 @@ CLAYGO gives every temporary artifact:
 - compact proof
 - an exact-path cleanup gate
 
+CLAYGO also gives task-owned browser tabs a lifecycle: close them as soon as their work is finished, without touching user-owned or other-task tabs.
+
 In one real-world cleanup, this workflow reduced task-generated temporary storage by 27,804,260 KiB (26.516 GiB) while preserving active builds, source snapshots, proof evidence, repository files, captures, the installed app, and live agent sessions.
+
+In a Codex-wide tab-hygiene case study, one completed task closed 49 task-owned tabs while preserving four user-owned tabs. Vincent observed Activity Monitor CPU fall immediately from about 100% to about 80%. During the same period, the 1-minute load average fell from 36.32 to 9.64 in about three minutes and to 7.65 in about five minutes. The whole-machine figures include concurrent-work effects, so the case reports them as observed outcomes rather than tabs-only causation. Read the [full case study](skills/claygo/references/codex-tab-hygiene-case-study.md).
 
 ## What makes it different
 
-CLAYGO is not a disk cleaner and does not search your machine for things to delete. It manages only roots created by the current task or explicitly authorized by their owner.
+CLAYGO is not a disk cleaner or indiscriminate tab closer. It manages only roots and tabs created by the current task or explicitly authorized by their owner.
 
 The bundled preflight helper creates provenance receipts, checks device and inode identity, rejects symlinks and VCS metadata, detects special files, optionally checks `lsof`, and produces machine-readable proof. It never deletes data.
 
@@ -42,6 +46,12 @@ Ask Codex:
 
 ```text
 Use $claygo for the temporary build and test artifacts in this task.
+```
+
+For browser-heavy or resource-contended work:
+
+```text
+Use $claygo to close task-owned browser tabs as soon as their work is finished.
 ```
 
 For deterministic ownership, create a new scratch root and receipt:
@@ -74,6 +84,7 @@ CLAYGO rejects or protects:
 - symlinks and path-identity changes
 - special files and optionally open files
 - source, user data, credentials, agent history, installed apps, and active work
+- user-owned, unrelated, uncertain, or another active task's browser tabs
 - permission mutation unless a user explicitly authorizes a bounded repair
 
 This is defense in depth, not a security sandbox. A malicious local process can still race or tamper with filesystem state. Re-run preflight immediately before cleanup and use the operating system and agent host's approval controls.

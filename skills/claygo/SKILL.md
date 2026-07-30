@@ -1,11 +1,11 @@
 ---
 name: claygo
-description: Manage temporary build, test, review, snapshot, module-cache, and scratch artifacts with explicit ownership, lifecycle states, compact proof, and exact-path cleanup gates. Use when work will create or audit temporary artifacts, during disk-pressure cleanup, or at task closeout. Do not trigger for source-only edits that create no disposable artifacts.
+description: Manage temporary build, test, review, snapshot, module-cache, scratch, and browser-tab resources with explicit ownership, lifecycle states, compact proof, and exact-path cleanup gates. Use when work will create or audit temporary resources, during disk or host pressure, or at task closeout. Do not trigger for source-only edits that create no disposable resources.
 ---
 
 # CLAYGO
 
-Keep temporary storage proportional to active work. Give each artifact an owner and lifecycle, preserve compact proof, and remove only exact roots that are proven disposable.
+Keep temporary resource use proportional to active work. Give each artifact or browser tab an owner and lifecycle, preserve compact proof, and remove only exact roots or finalize only tabs that are proven disposable.
 
 ## Establish ownership
 
@@ -24,16 +24,29 @@ python3 scripts/claygo_preflight.py init \
 
 4. Treat a pre-existing or unreceipted path as unowned. Audit and report it; do not adopt or delete it without exact user or coordinator authorization.
 
+For browser work, record the stable tab identifier or handle, surface or URL, purpose, ownership evidence, lifecycle state, and keep condition. A tab is task-owned only when the current task opened it or its owner explicitly transferred it. Do not infer ownership from content or recency.
+
 ## Track the lifecycle
 
-Use exactly one state per root:
+Use exactly one state per resource:
 
 - `active`: required by running or imminent work.
 - `evidence`: compact logs, manifests, hashes, or notes required for closeout.
 - `disposable`: purpose ended and useful evidence exists elsewhere.
-- `removed`: exact path is absent and verification passed.
+- `removed`: an exact filesystem path is absent and verification passed, or an owned browser tab was finalized and is no longer open.
 
-Move roots to `disposable` after proof, abort, supersession, or release inclusion. Never interrupt useful active work solely to clean it.
+Move resources to `disposable` after proof, abort, supersession, or release inclusion. Never interrupt useful active work solely to clean it.
+
+## Keep browser tabs lean
+
+- Keep a task-owned tab open only while it is actively needed or intentionally waiting for user review, approval, or input.
+- At safe waypoints and final closeout, audit owned tabs and promptly finalize or close stale and finished tabs through the browser provider's supported mechanism.
+- Preserve the URL or durable artifact link when it is useful evidence; an open tab is not durable proof.
+- Never close user-owned, unrelated, or another active task's tabs. When ownership is uncertain, leave the tab open and report it.
+- Report tabs closed, tabs intentionally kept with reasons, and tabs skipped because ownership was uncertain.
+- Do not defer finished-tab cleanup to a special pause. Make it part of each task's normal safe-waypoint and closeout flow.
+
+Read `references/codex-tab-hygiene-case-study.md` when quantifying the observed impact of continuous tab hygiene.
 
 ## Keep artifacts lean
 
@@ -56,7 +69,7 @@ Use full audit for large roots, disk pressure, shared environments, cross-worker
 
 ## Run the cleanup gate
 
-Immediately before deletion, run:
+Immediately before filesystem deletion, run:
 
 ```bash
 python3 scripts/claygo_preflight.py check \
@@ -64,7 +77,7 @@ python3 scripts/claygo_preflight.py check \
   --check-open-files
 ```
 
-Require a passing result. The helper verifies exact path identity, the recorded temporary boundary, device and inode, symlink absence, VCS absence, special-file absence, and optional `lsof` results. It never deletes.
+Require a passing result. The helper verifies exact path identity, the recorded temporary boundary, device and inode, symlink absence, VCS absence, special-file absence, and optional `lsof` results. It never deletes and does not operate on browser tabs.
 
 Then:
 
@@ -96,4 +109,4 @@ If ownership, classification, path identity, process state, or evidence is uncer
 
 ## Close out
 
-Report exact removed paths and pre-cleanup sizes, protected or skipped paths and reasons, preserved evidence, process/open-file results, permission changes or the absence of them, free space before and after when measured, and remaining owner-confirmation candidates. Do not attribute all observed free-space change to CLAYGO when APFS clones, hard links, sparse files, concurrent builds, or other writes can affect the result.
+Report exact removed paths and pre-cleanup sizes; tabs closed, intentionally kept, or skipped; protected paths and reasons; preserved evidence; process/open-file results; permission changes or their absence; free space and host load before and after when measured; and remaining owner-confirmation candidates. Do not attribute all observed resource change to CLAYGO when APFS behavior or concurrent work can affect the result.

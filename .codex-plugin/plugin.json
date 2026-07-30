@@ -1,7 +1,7 @@
 {
   "name": "claygo",
-  "version": "0.1.0",
-  "description": "Ownership-aware cleanup for temporary coding-agent artifacts.",
+  "version": "0.2.0",
+  "description": "Ownership-aware cleanup for coding-agent resources.",
   "author": {
     "name": "Vincent",
     "url": "https://github.com/vinzcio"
@@ -13,14 +13,15 @@
     "cleanup",
     "agent-skill",
     "temporary-files",
+    "browser-tabs",
     "developer-tools",
     "safety"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "CLAYGO",
-    "shortDescription": "Safe cleanup for coding-agent artifacts",
-    "longDescription": "Give temporary artifacts an owner and lifecycle, preserve compact proof, and clean only exact disposable roots behind a deterministic safety gate.",
+    "shortDescription": "Safe cleanup for artifacts and browser tabs",
+    "longDescription": "Give temporary artifacts and browser tabs an owner and lifecycle, preserve compact proof, and clean proven disposable resources as soon as their work is finished.",
     "developerName": "Vincent",
     "category": "Productivity",
     "capabilities": [
@@ -29,6 +30,7 @@
     ],
     "defaultPrompt": [
       "Use CLAYGO for the temporary artifacts in this task.",
+      "Apply CLAYGO browser-tab hygiene at safe waypoints.",
       "Audit my task-owned scratch roots with CLAYGO.",
       "Close out this task's disposable artifacts safely."
     ]

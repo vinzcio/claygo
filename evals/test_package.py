@@ -44,6 +44,32 @@ class PackageTests(unittest.TestCase):
         for token in forbidden:
             self.assertNotIn(token, helper)
 
+    def test_tab_hygiene_policy_preserves_other_owners(self):
+        skill = (ROOT / "skills" / "claygo" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Keep browser tabs lean", skill)
+        self.assertIn(
+            "Never close user-owned, unrelated, or another active task's tabs",
+            skill,
+        )
+        self.assertIn("When ownership is uncertain, leave the tab open", skill)
+
+    def test_tab_hygiene_case_study_is_packaged(self):
+        case_study = (
+            ROOT
+            / "skills"
+            / "claygo"
+            / "references"
+            / "codex-tab-hygiene-case-study.md"
+        )
+        self.assertTrue(case_study.is_file())
+        text = case_study.read_text(encoding="utf-8")
+        self.assertIn("49 task-owned tabs", text)
+        self.assertIn("36.32 to 9.64", text)
+        self.assertIn("45 of 45 cases passing", text)
+        self.assertIn("826 passes", text)
+
 
 if __name__ == "__main__":
     unittest.main()
