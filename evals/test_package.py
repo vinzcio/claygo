@@ -12,7 +12,7 @@ class PackageTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(manifest["name"], ROOT.name)
+        self.assertEqual(manifest["name"], "claygo")
         self.assertRegex(manifest["version"], r"^\d+\.\d+\.\d+$")
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["license"], "MIT")
@@ -36,24 +36,49 @@ class PackageTests(unittest.TestCase):
             if path.is_file():
                 self.assertNotIn("[TODO:", path.read_text(encoding="utf-8"))
 
-    def test_helper_never_deletes(self):
+    def test_canonical_helper_owns_finalization(self):
+        helper = (ROOT / "skills" / "claygo" / "scripts" / "claygo_core.py").read_text(
+            encoding="utf-8"
+        )
+        for token in (
+            "validate_identity(record, receipt)",
+            "check_open_files(candidate",
+            "scan_candidate(candidate",
+            "bounded_rmtree(candidate",
+            'record["state"] = "removed"',
+        ):
+            self.assertIn(token, helper)
+
+        cli = (ROOT / "skills" / "claygo" / "scripts" / "claygo.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("from claygo_core import (", cli)
+        self.assertIn("def build_parser()", cli)
+
+    def test_compatibility_entrypoint_delegates_to_canonical_helper(self):
         helper = (
             ROOT / "skills" / "claygo" / "scripts" / "claygo_preflight.py"
         ).read_text(encoding="utf-8")
-        forbidden = ["shutil.rmtree(", "os.remove(", "os.unlink(", ".unlink("]
-        for token in forbidden:
-            self.assertNotIn(token, helper)
+        self.assertIn("from claygo import main", helper)
 
     def test_tab_hygiene_policy_preserves_other_owners(self):
         skill = (ROOT / "skills" / "claygo" / "SKILL.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Keep browser tabs lean", skill)
+        self.assertIn("Browser tabs and processes", skill)
         self.assertIn(
-            "Never close user-owned, unrelated, or another active task's tabs",
+            "User-owned browser tabs are never task-owned",
             skill,
         )
-        self.assertIn("When ownership is uncertain, leave the tab open", skill)
+        self.assertIn("another task's resources", skill)
+
+    def test_profile_reference_and_closeout_hook_are_packaged(self):
+        self.assertTrue(
+            (ROOT / "skills/claygo/references/resource-profiles.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "skills/claygo/scripts/claygo_closeout_hook.py").is_file()
+        )
 
     def test_tab_hygiene_case_study_is_packaged(self):
         case_study = (

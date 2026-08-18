@@ -1,4 +1,4 @@
 interface:
   display_name: "CLAYGO"
-  short_description: "Own temporary artifacts and tabs safely"
-  default_prompt: "Use $claygo to manage this task's temporary artifacts and close task-owned browser tabs as soon as their work is finished."
+  short_description: "Finalize owned temporary resources safely"
+  default_prompt: "Use $claygo to register, classify, finalize, and verify this task's disposable resources before closeout."

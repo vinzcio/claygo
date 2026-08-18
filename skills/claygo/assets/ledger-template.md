@@ -1,42 +1,22 @@
-# CLAYGO ownership ledger
+# CLAYGO task ledger
 
-- Owner:
-- Task or thread ID:
+- Owner/thread ID:
 - Created:
-- Target filesystem:
+- Registry: `~/.local/state/claygo/resources`
 - Free space at start:
 - Concurrent heavy-work check:
 
-| Exact path | Resolved path | Purpose | State | Device | Inode | Allocated size | Evidence outside root | Cleanup condition |
-| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |
-|  |  |  | active |  |  |  |  |  |
+| Receipt | Exact path or resource handle | Profile/type | Purpose | State | Measured size | Evidence outside resource | Keep/finalize condition |
+| --- | --- | --- | --- | --- | ---: | --- | --- |
 
-## Browser-tab resources
+## Closeout
 
-| Tab ID or handle | Surface or URL | Purpose | Ownership evidence | State | Keep condition | Close or finalize result |
-| --- | --- | --- | --- | --- | --- | --- |
-|  |  |  |  | active |  |  |
-
-## Optional resource-pressure observations
-
-- Before CPU or load evidence:
-- Cleanup action and time:
-- After CPU or load evidence:
-- Concurrent-work caveats:
-
-## Cleanup record
-
-- Preflight receipt:
-- Preflight result:
-- Required approval:
-- Open-file/process result:
-- Permission changes:
+- `claygo closeout` result:
 - Removed paths and sizes:
-- Skipped/protected paths and reasons:
-- Free space before:
+- Worktrees removed:
+- Permission repairs:
+- Protected resources and reasons:
+- Unresolved resources:
+- Tabs/processes closed or intentionally retained:
 - Free space after:
-- Accounting caveats:
-- Remaining owner-confirmation candidates:
-- Tabs closed:
-- Tabs intentionally kept and reasons:
-- Tabs skipped for uncertain ownership:
+- APFS/concurrent-write caveats:

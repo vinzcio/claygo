@@ -26,6 +26,7 @@ class ClaygoPreflightTests(unittest.TestCase):
         cls.root.mkdir(mode=0o700)
         cls.receipts = cls.root / "receipts"
         cls.receipts.mkdir()
+        cls.state = cls.root / "state"
 
     @classmethod
     def tearDownClass(cls):
@@ -37,6 +38,7 @@ class ClaygoPreflightTests(unittest.TestCase):
             capture_output=True,
             text=True,
             check=False,
+            env={**os.environ, "CLAYGO_STATE_DIR": str(self.state)},
         )
         try:
             payload = json.loads(result.stdout)
@@ -194,7 +196,7 @@ class ClaygoPreflightTests(unittest.TestCase):
             "symlinked parent",
         )
         self.assertEqual(result.returncode, 2)
-        self.assertIn("symlink component", payload["error"])
+        self.assertIn("component is a symlink", payload["error"])
 
     def test_special_file_is_rejected(self):
         if not hasattr(os, "mkfifo"):
@@ -213,6 +215,7 @@ class ClaygoPreflightTests(unittest.TestCase):
         candidate.rmdir()
         result, payload = self.run_cli("verify-removed", "--receipt", receipt)
         self.assertEqual(result.returncode, 0, payload)
+        self.assertFalse(receipt.exists())
 
     def test_open_file_check_detects_reference(self):
         if shutil.which("lsof") is None:

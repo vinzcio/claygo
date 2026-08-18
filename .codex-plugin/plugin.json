@@ -1,6 +1,6 @@
 {
   "name": "claygo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ownership-aware cleanup for coding-agent resources.",
   "author": {
     "name": "Vincent",
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "CLAYGO",
-    "shortDescription": "Safe cleanup for artifacts and browser tabs",
-    "longDescription": "Give temporary artifacts and browser tabs an owner and lifecycle, preserve compact proof, and clean proven disposable resources as soon as their work is finished.",
+    "shortDescription": "Finalize owned temporary resources safely",
+    "longDescription": "Register typed temporary resources, enforce their lifecycle, finalize proven disposable roots, and verify exact absence without touching another owner's work.",
     "developerName": "Vincent",
     "category": "Productivity",
     "capabilities": [

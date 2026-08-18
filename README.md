@@ -1,111 +1,148 @@
 # CLAYGO
 
-Ownership-aware cleanup for coding agents.
+Ownership-aware lifecycle and cleanup for coding-agent resources.
 
 ## Why CLAYGO
 
-CLAYGO stands for **Clean As You Go**: the work ethic of cleaning up as part of the work, while ownership and context are still clear, instead of leaving a risky purge for the end.
+CLAYGO stands for **Clean As You Go**: temporary resources are owned when created, kept only while useful, and finalized at a safe waypoint instead of accumulating until a risky emergency purge.
 
-For coding agents, that means temporary artifacts are accounted for when they are created, kept only while they are useful, and removed at a safe waypoint with proof. The goal is not a spotless machine at any cost. It is disciplined work that does not leave a mess—or destroy live work while trying to clean one.
+Coding agents create build trees, dependency checkouts, screenshots, module caches, deployment candidates, worktrees, browser tabs, and background processes. A useful cleanup system must remove finished resources without guessing which paths are safe.
 
-Coding agents create build trees, screenshots, module caches, review snapshots, scratch files, and browser tabs quickly. Finalizing them safely requires more than guessing which resource looks temporary.
+CLAYGO gives every registered filesystem resource:
 
-CLAYGO gives every temporary artifact:
+- an owner and purpose
+- a typed safety profile
+- device and inode identity
+- a machine-readable lifecycle
+- exact-path finalization and absence proof
+- a closeout guard that rejects unexplained leftovers
 
-- an owner
-- a lifecycle
-- a protected boundary
-- compact proof
-- an exact-path cleanup gate
+It also keeps task-owned browser tabs and processes in the same lifecycle discipline without treating user-owned resources as task property.
 
-CLAYGO also gives task-owned browser tabs a lifecycle: close them as soon as their work is finished, without touching user-owned or other-task tabs.
+## What changed in 0.3
 
-In one real-world cleanup, this workflow reduced task-generated temporary storage by 27,804,260 KiB (26.516 GiB) while preserving active builds, source snapshots, proof evidence, repository files, captures, the installed app, and live agent sessions.
+Earlier CLAYGO releases deliberately stopped at a preflight check. That was safe but operationally incomplete: normal SwiftPM framework symlinks and dependency `.git` metadata blocked cleanup, lifecycle state lived in handwritten Markdown, and agents could finish with gigabytes of disposable output still present.
 
-In a Codex-wide tab-hygiene case study, one completed task closed 49 task-owned tabs while preserving four user-owned tabs. Vincent observed Activity Monitor CPU fall immediately from about 100% to about 80%. During the same period, the 1-minute load average fell from 36.32 to 9.64 in about three minutes and to 7.65 in about five minutes. The whole-machine figures include concurrent-work effects, so the case reports them as observed outcomes rather than tabs-only causation. Read the [full case study](skills/claygo/references/codex-tab-hygiene-case-study.md).
+CLAYGO 0.3 adds:
 
-## What makes it different
+- profile-aware generated-tree validation
+- an atomic `finalize` command that validates, deletes, and verifies the exact resource
+- a durable per-resource registry under `~/.local/state/claygo`
+- explicit `active`, `evidence`, `disposable`, `protected`, and `removed` states
+- owner closeout and disposable-resource reconciliation
+- clean, merged Git-worktree finalization without `--force`
+- bounded owner-only permission repair inside receipted generated roots
+- a deterministic stop-hook helper
+- legacy version-1 receipt migration
 
-CLAYGO is not a disk cleaner or indiscriminate tab closer. It manages only roots and tabs created by the current task or explicitly authorized by their owner.
-
-The bundled preflight helper creates provenance receipts, checks device and inode identity, rejects symlinks and VCS metadata, detects special files, optionally checks `lsof`, and produces machine-readable proof. It never deletes data.
+The strict `generic` profile still rejects every symlink, VCS marker, and special file. Generated profiles allow only their expected internal structure; external symlinks, actual repositories, changed identities, open handles, and ambiguous ownership remain denied.
 
 ## Install the Agent Skill
-
-Install it with:
 
 ```text
 $skill-installer install https://github.com/vinzcio/claygo/tree/main/skills/claygo
 ```
 
-Restart Codex after installation. The repository also includes a skill-only Codex plugin manifest for plugin distribution.
+Restart the agent host after installation.
 
-## Use it
+The optional user-level stop hook can call `skills/claygo/scripts/claygo_closeout_hook.py` on the host's `stop` event. It finalizes resources already marked `disposable` and blocks successful closeout while owned resources remain unexplained.
 
-Ask Codex:
-
-```text
-Use $claygo for the temporary build and test artifacts in this task.
-```
-
-For browser-heavy or resource-contended work:
-
-```text
-Use $claygo to close task-owned browser tabs as soon as their work is finished.
-```
-
-For deterministic ownership, create a new scratch root and receipt:
+## Register a resource
 
 ```bash
-python3 skills/claygo/scripts/claygo_preflight.py init \
-  --path /private/tmp/my-project-task-unique \
+python3 skills/claygo/scripts/claygo.py init \
+  --path /private/tmp/my-project-task \
   --temp-root /private/tmp \
   --receipt /tmp/my-project-task-receipt.json \
-  --owner task-unique \
-  --purpose "build and test"
+  --owner "$THREAD_ID" \
+  --purpose "Swift build and focused tests" \
+  --profile swiftpm
 ```
 
-Immediately before cleanup:
+Available profiles:
+
+- `generic`
+- `swiftpm`
+- `xcode-derived-data`
+- `node-test`
+- `deployment`
+- `screenshot`
+- `git-worktree` through `register-worktree`
+
+See [resource profiles](skills/claygo/references/resource-profiles.md) for their exact boundaries.
+
+## Finalize a finished resource
 
 ```bash
-python3 skills/claygo/scripts/claygo_preflight.py check \
+python3 skills/claygo/scripts/claygo.py mark \
+  --receipt /tmp/my-project-task-receipt.json \
+  --state disposable \
+  --reason "tests passed and proof is preserved in the task transcript"
+
+python3 skills/claygo/scripts/claygo.py finalize \
   --receipt /tmp/my-project-task-receipt.json \
   --check-open-files
 ```
 
-The helper returns JSON and never performs deletion. The agent must still preserve evidence, obey host approvals, delete only the exact path, and verify absence.
+Finalization scans the profile, revalidates device/inode identity immediately before deletion, checks open handles when requested, deletes only the exact candidate, verifies absence, writes compact proof to the registry, and removes the temporary receipt.
+
+## Enforce task closeout
+
+```bash
+python3 skills/claygo/scripts/claygo.py closeout \
+  --owner "$THREAD_ID" \
+  --finalize-disposable
+```
+
+Closeout succeeds only when every owned resource is removed or concretely protected. It rejects remaining `active` and `evidence` resources and reports cleanup failures rather than pretending the task is complete.
+
+`reconcile --all-disposable` finalizes only resources already explicitly marked `disposable`. It never infers ownership from age, names, or location.
+
+For a version-1 receipt from CLAYGO 0.2, use `migrate-legacy` only after verifying the recorded owner and path. Supply the correct profile, lifecycle state, and a concrete reason; migration rechecks the original device/inode identity before adding the resource to the registry.
+
+## Git worktrees
+
+Register a task-created clean worktree immediately after `git worktree add`. At finalization CLAYGO requires:
+
+- clean tracked and untracked status
+- `HEAD` reachable from the recorded merged ref
+- membership in the recorded repository's worktree list
+- zero open handles when closeout runs
+- successful `git worktree remove` without force
+
+Branch deletion remains a separate explicit decision.
 
 ## Safety model
 
-CLAYGO rejects or protects:
+CLAYGO denies cleanup when it finds:
 
-- unknown and pre-existing ownership
-- repositories, worktrees, VCS metadata, and bare Git repositories
-- symlinks and path-identity changes
-- special files and optionally open files
-- source, user data, credentials, agent history, installed apps, and active work
-- user-owned, unrelated, uncertain, or another active task's browser tabs
-- permission mutation unless a user explicitly authorizes a bounded repair
+- unknown or pre-existing ownership
+- changed device/inode identity
+- external or unreadable symlinks
+- profile-incompatible VCS metadata or actual repositories
+- dirty or unmerged worktrees
+- special files or open handles
+- source, user data, credentials, databases, agent state, installed apps, or another task's resources
+- permission failures outside a receipted generated root owned by the current user
 
-This is defense in depth, not a security sandbox. A malicious local process can still race or tamper with filesystem state. Re-run preflight immediately before cleanup and use the operating system and agent host's approval controls.
+This is defense in depth, not a security sandbox. A malicious local process can still race local filesystem operations. CLAYGO revalidates identity immediately before finalization and uses Python's symlink-resistant `shutil.rmtree` implementation where the platform provides it.
 
-## Compatibility
+## Browser-tab evidence
 
-- The Agent Skill uses the open `SKILL.md` format.
-- The plugin manifest targets Codex.
-- The preflight helper uses Python's standard library.
-- The optional open-file check currently requires `lsof`, normally available on macOS and many Linux systems.
+In a Codex-wide tab-hygiene case study, one completed task closed 49 task-owned tabs while preserving four user-owned tabs. Vincent observed Activity Monitor CPU fall immediately from about 100% to about 80%. During the same period, the 1-minute load average fell from 36.32 to 9.64 in about three minutes and to 7.65 in about five minutes. Whole-machine figures include concurrent-work effects. Read the [full case study](skills/claygo/references/codex-tab-hygiene-case-study.md).
 
 ## Development
 
-Run the adversarial evaluations:
+Run all evaluations in an exact test-owned root:
 
 ```bash
 CLAYGO_TEST_ROOT=/private/tmp/claygo-tests \
+CLAYGO_STATE_DIR=/private/tmp/claygo-tests-state \
+PYTHONDONTWRITEBYTECODE=1 \
   python3 -m unittest discover -s evals -p 'test_*.py' -v
 ```
 
-The test root must not already exist. Tests create and remove only that exact root.
+The test roots must not already exist. Evaluations cover generic strictness, SwiftPM internal links and dependency metadata, external-link escapes, changed inodes, open handles, permission repair, legacy receipts, reconciliation, merged-worktree removal, and stop-hook behavior.
 
 ## License
 
